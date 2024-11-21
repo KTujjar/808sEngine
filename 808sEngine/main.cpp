@@ -9,16 +9,18 @@
 
 // Important to understand: SDL_Renderer is an _optional_ component of SDL2.
 // For a multi-platform app consider using e.g. SDL+DirectX on Windows and SDL+OpenGL on Linux/OSX.
-
+#define _CRT_SECURE_NO_WARNINGS 
+#include "texture_loader.h"
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+#include <iostream>
+#include <stdexcept>
 #include <stdio.h>
 #include <SDL.h>
 
-#if !SDL_VERSION_ATLEAST(2,0,17)
-#error This backend requires SDL 2.0.17+ because of SDL_RenderGeometry() function
-#endif
+
+
 
 // Main code
 int main(int, char**)
@@ -76,6 +78,12 @@ int main(int, char**)
     // Main loop
     bool done = false;;
 
+    //Logo
+    SDL_Texture* my_texture;
+    int my_image_width, my_image_height;
+    bool ret = LoadTextureFromFile("assets\\logo.jpeg", renderer, &my_texture, &my_image_width, &my_image_height);
+    IM_ASSERT(ret);
+
     while (!done)
     {
         // Poll and handle events (inputs, window resize, etc.)
@@ -102,6 +110,8 @@ int main(int, char**)
         ImGui_ImplSDLRenderer2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
+      
+
 
         // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
         static float f = 0.0f;
@@ -113,13 +123,25 @@ int main(int, char**)
 
 
         //Window Cant be Collapsed or Moved through drag
-        ImGui::Begin("Hello, world!", NULL ,(ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove));
+        ImGui::Begin("New/Open", NULL, (ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar));
 
+        //Logo + Top Window Box
+        ImGui::BeginGroup();
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        drawList->ChannelsSplit(2);
+        drawList->ChannelsSetCurrent(1);
+        ImGui::Image((ImTextureID)(intptr_t)my_texture, ImVec2((float)70, (float)70));
+        drawList->ChannelsSetCurrent(0);
+        drawList->AddRectFilled(ImVec2(0,0), ImVec2(1280, 90), IM_COL32(75,0,130,255));
+        drawList->ChannelsMerge();
+        ImGui::EndGroup();
+
+        ImGui::SameLine();
+        ImGui::Button("New Project", ImVec2(200, 50));
 
         //TODO: Create the main window on game engine being opened. Look into making it a loop of its own so another window can be opened
         //      to show the actual project. Also need to know how to put a block at the top of the window to create something similar to Godot.
-
-
+        ImGui::Dummy(ImVec2(0, 40));
         ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
@@ -132,6 +154,12 @@ int main(int, char**)
             
 
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::End();
+
+        ImGui::Begin("SDL_Renderer Texture Test");
+        ImGui::Text("pointer = %p", my_texture);
+        ImGui::Text("size = %d x %d", my_image_width, my_image_height);
+        ImGui::Image((ImTextureID)(intptr_t)my_texture, ImVec2((float)my_image_width, (float)my_image_height));
         ImGui::End();
 
         // Rendering
