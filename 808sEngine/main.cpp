@@ -15,12 +15,9 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include <iostream>
-#include <stdexcept>
+#include <vector>
 #include <stdio.h>
 #include <SDL.h>
-
-
-
 
 // Main code
 int main(int, char**)
@@ -64,6 +61,8 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
 
+    
+
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
     //ImGui::StyleColorsLight();
@@ -77,12 +76,28 @@ int main(int, char**)
 
     // Main loop
     bool done = false;;
+    
+
+    //Style
+    ImGuiStyle& style = ImGui::GetStyle();
 
     //Logo
     SDL_Texture* my_texture;
     int my_image_width, my_image_height;
     bool ret = LoadTextureFromFile("assets\\logo.jpeg", renderer, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
+
+    //Bool for create/new project windows
+    bool newProject = false;    
+    bool openProject = true;
+    //General Color
+    ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(43, 58, 68, 255));
+
+    //HoveredColor
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(55, 58, 75, 255));
+
+    //ActiveColor
+    ImGui::PushStyleColor(ImGuiCol_ButtonActive, IM_COL32(55, 58, 75, 255));
 
     while (!done)
     {
@@ -123,7 +138,21 @@ int main(int, char**)
 
 
         //Window Cant be Collapsed or Moved through drag
+        
+        //Color of the buttons on the window
+
+        //General Color
+        ImGui::PushStyleColor(ImGuiCol_Button, IM_COL32(43,58,68,255));
+
+        //HoveredColor
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, IM_COL32(55, 58, 75, 255));
+
+        //ActiveColor
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, openProject ? IM_COL32(55, 58, 75, 255) : IM_COL32(43,58,68,255));
+
+        
         ImGui::Begin("New/Open", NULL, (ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar));
+
 
         //Logo + Top Window Box
         ImGui::BeginGroup();
@@ -136,31 +165,53 @@ int main(int, char**)
         drawList->ChannelsMerge();
         ImGui::EndGroup();
 
+
         ImGui::SameLine();
-        ImGui::Button("New Project", ImVec2(200, 50));
+        ImGui::SetCursorPos(ImVec2(380, 20));
 
-        //TODO: Create the main window on game engine being opened. Look into making it a loop of its own so another window can be opened
-        //      to show the actual project. Also need to know how to put a block at the top of the window to create something similar to Godot.
-        ImGui::Dummy(ImVec2(0, 40));
-        ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+        if (ImGui::Button("Open Project", ImVec2(200, 50)))
+        {
+            newProject = false;
+            openProject = true;
+        }
 
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
-
-        if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-            counter++;
         ImGui::SameLine();
-        ImGui::Text("counter = %d", counter);
-            
+        ImGui::SetCursorPos(ImVec2(620, 20));
 
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        if (ImGui::Button("New Project", ImVec2(200, 50)))
+        {
+            newProject = true;
+            openProject = false;
+        }
+
+        if (newProject)
+        {
+            ImGui::Dummy(ImVec2(0, 40));
+            ImGui::Text("Templates");
+        }
+        else
+
+        if (openProject)
+        {
+            ImGui::Dummy(ImVec2(0, 40));
+
+            //Group for the list of projects
+            const char* items[] = { "Apple", "Banana", "Cherry", "Kiwi", "Mango", "Orange", "Pineapple", "Strawberry", "Watermelon" };
+            static int item_current = 1;
+            /*ImFontConfig fontCfg = {};
+            fontCfg.RasterizerDensity = 10;*/
+            ImGui::GetFont()->Scale *= 2;
+            ImGui::PushFont(ImGui::GetFont());
+            ImGui::ListBox("Projects", &item_current, items, IM_ARRAYSIZE(items), 10);
+            ImGui::GetFont()->Scale /= 2;
+            ImGui::PopFont();
+           
+        }
+
+        
         ImGui::End();
 
-        ImGui::Begin("SDL_Renderer Texture Test");
-        ImGui::Text("pointer = %p", my_texture);
-        ImGui::Text("size = %d x %d", my_image_width, my_image_height);
-        ImGui::Image((ImTextureID)(intptr_t)my_texture, ImVec2((float)my_image_width, (float)my_image_height));
-        ImGui::End();
+        ImGui::PopStyleColor(3);
 
         // Rendering
         ImGui::Render();
