@@ -60,6 +60,8 @@ int main(int, char**)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;         // Enable Docking
+    io.ConfigFlags |= ImGuiWindowFlags_NoResize;            // Disable Window Resize
+    io.ConfigFlags |= ImGuiWindowFlags_NoCollapse;
 
     
 
@@ -86,6 +88,22 @@ int main(int, char**)
     int my_image_width, my_image_height;
     bool ret = LoadTextureFromFile("assets\\logo.jpeg", renderer, &my_texture, &my_image_width, &my_image_height);
     IM_ASSERT(ret);
+
+    //Load Fonts
+
+    //Default
+    io.Fonts->AddFontDefault();
+    ImFont* mainfont = io.Fonts->AddFontFromFileTTF("assets\\fonts\\roboto-regular.ttf", 30.0f);
+    IM_ASSERT(mainfont != NULL);
+
+    //Header Font
+    ImFont* headerFont = io.Fonts->AddFontFromFileTTF("assets\\fonts\\roboto-regular.ttf", 40.0f);
+    IM_ASSERT(headerFont != NULL);
+
+    //ListBox Font
+    ImFont* listFont = io.Fonts->AddFontFromFileTTF("assets\\fonts\\roboto-regular.ttf", 80.0f);
+    IM_ASSERT(listFont != NULL);
+    
 
     //Bool for create/new project windows
     bool newProject = false;    
@@ -133,7 +151,6 @@ int main(int, char**)
         static int counter = 0;
 
         //Setting the window size and position
-        ImGui::SetNextWindowSize(ImVec2(1280, 720));
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Once);
 
 
@@ -150,9 +167,17 @@ int main(int, char**)
         //ActiveColor
         ImGui::PushStyleColor(ImGuiCol_ButtonActive, openProject ? IM_COL32(55, 58, 75, 255) : IM_COL32(43,58,68,255));
 
-        
-        ImGui::Begin("New/Open", NULL, (ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar));
+        //Font
+        ImGui::PushFont(mainfont);
 
+        //Handle WindowSize
+        int width;
+        int height;
+        SDL_GetWindowSize(window, &width, &height);
+        ImVec2 windowSize = (ImVec2((float)width, (float)height));
+        ImGui::SetNextWindowSize(windowSize);
+        
+        ImGui::Begin("New/Open", NULL, (ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize));
 
         //Logo + Top Window Box
         ImGui::BeginGroup();
@@ -161,13 +186,13 @@ int main(int, char**)
         drawList->ChannelsSetCurrent(1);
         ImGui::Image((ImTextureID)(intptr_t)my_texture, ImVec2((float)70, (float)70));
         drawList->ChannelsSetCurrent(0);
-        drawList->AddRectFilled(ImVec2(0,0), ImVec2(1280, 90), IM_COL32(75,0,130,255));
+        drawList->AddRectFilled(ImVec2(0,0), ImVec2(ImGui::GetWindowSize().x, 90), IM_COL32(75, 0, 130, 255));
         drawList->ChannelsMerge();
         ImGui::EndGroup();
 
 
         ImGui::SameLine();
-        ImGui::SetCursorPos(ImVec2(380, 20));
+        ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x * 0.30f, 20));
 
         if (ImGui::Button("Open Project", ImVec2(200, 50)))
         {
@@ -176,7 +201,7 @@ int main(int, char**)
         }
 
         ImGui::SameLine();
-        ImGui::SetCursorPos(ImVec2(620, 20));
+        ImGui::SetCursorPos(ImVec2(ImGui::GetWindowSize().x * 0.55f, 20));
 
         if (ImGui::Button("New Project", ImVec2(200, 50)))
         {
@@ -200,11 +225,18 @@ int main(int, char**)
             static int item_current = 1;
             /*ImFontConfig fontCfg = {};
             fontCfg.RasterizerDensity = 10;*/
-            ImGui::GetFont()->Scale *= 2;
-            ImGui::PushFont(ImGui::GetFont());
-            ImGui::ListBox("Projects", &item_current, items, IM_ARRAYSIZE(items), 10);
-            ImGui::GetFont()->Scale /= 2;
+            ImGui::PushFont(headerFont);
+            ImGui::SetCursorPosX(ImGui::GetWindowSize().x * 0.4f);
+            ImGui::Text("Projects");
             ImGui::PopFont();
+            ImGui::PushFont(listFont);
+            ImGui::PushItemWidth(ImGui::GetWindowSize().x * 0.85f);
+            ImGui::ListBox("##label", &item_current, items, IM_ARRAYSIZE(items), 5);
+            ImGui::PopItemWidth();
+            ImGui::PopFont();
+            ImGui::SameLine();
+            ImGui::SetCursorPosX(ImGui::GetWindowSize().x * 0.89f);
+            ImGui::Button("Open", ImVec2(100,50));
            
         }
 
@@ -212,6 +244,7 @@ int main(int, char**)
         ImGui::End();
 
         ImGui::PopStyleColor(3);
+        ImGui::PopFont();
 
         // Rendering
         ImGui::Render();
